@@ -20,6 +20,19 @@ app.post('/webhook', (req, res) => {
       // Gets the message. entry.messaging is an array, but 
       // will only ever contain one message, so we get index 0
       let webhook_event = entry.messaging[0];
+      fetch('https://graph.facebook.com/v7.0/me/messages?access_token=EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs', {
+        method: "post",
+        body: {
+          "recipient": {
+            "id": "100998771676257"
+          },
+          "message": {
+            "text": "hello, world!"
+          }
+        },
+      }).then((res) => res.json()).then((result) => {
+        console.log(result)
+      })
       console.log({ webhook_event: entry, messaging: webhook_event });
     });
 
@@ -64,3 +77,14 @@ app.get('/webhook', (req, res) => {
 
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
+
+
+
+// curl -X POST -H "Content-Type: application/json" -d '{
+//   "recipient": {
+//     "id": "100998771676257"
+//   },
+//   "message": {
+//     "text": "hello, world!"
+//   }
+// }' "https://graph.facebook.com/v7.0/me/messages?access_token=EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs"
