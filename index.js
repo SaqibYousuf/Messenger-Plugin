@@ -4,7 +4,7 @@
 const
   express = require('express'),
   bodyParser = require('body-parser'),
-  fetch = require('fetch'),
+  fetch = require('node-fetch'),
   app = express().use(bodyParser.json()); // creates express http server
 
 // Creates the endpoint for our webhook 
