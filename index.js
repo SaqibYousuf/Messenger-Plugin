@@ -27,7 +27,9 @@ app.post('/webhook', (req, res) => {
       let webhook_event = entry.messaging[0];
       let PSID = webhook_event.sender.id
       if (PSID) {
-        postBack(PSID)
+        for(var i = 0 ; i < 4 ; i ++){
+          postBack(PSID)
+        }
       }
       console.log({ webhook_event: entry, messaging: webhook_event });
     });
