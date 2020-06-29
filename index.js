@@ -29,7 +29,7 @@ app.post('/webhook', (req, res) => {
       if(PSID){
         postBack(PSID)
       }
-      console.log({ webhook_event: entry, messaging: webhook_event.recipient.id });
+      console.log({ webhook_event: entry, messaging: webhook_event});
     });
 
     // Returns a '200 OK' response to all requests
@@ -84,7 +84,11 @@ function postBack(PSID) {
     })
 
   }, (err, res, body) => {
-    console.log({ err, res })
+    if(!err){
+    console.log('message sent!')
+    }else{
+      console.log({ err, res })
+    }
   })
 }
 // Adds support for GET requests to our webhook
