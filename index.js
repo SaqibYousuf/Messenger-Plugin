@@ -61,7 +61,7 @@ function postBack(PSID) {
             elements: [
               {
                 title: "Welcome!",
-                image_url: "https://petersfancybrownhats.com/company_image.png",
+                image_url: "https://4.img-dpreview.com/files/p/TS1200x900~sample_galleries/4973291808/1885203361.jpg",
                 subtitle: "We have the right hat for everyone.",
                 default_action: {
                   type: "web_url",
