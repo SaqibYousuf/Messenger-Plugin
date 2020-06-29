@@ -1,11 +1,15 @@
 'use strict';
 
+const { request } = require('express');
+
 // Imports dependencies and set up http server
 const
   express = require('express'),
   bodyParser = require('body-parser'),
   fetch = require('node-fetch'),
-  app = express().use(bodyParser.json()); // creates express http server
+  app = express().use(bodyParser.json()),
+  request = require('request')
+  ; // creates express http server
 
 // Creates the endpoint for our webhook 
 app.post('/webhook', (req, res) => {
@@ -21,22 +25,11 @@ app.post('/webhook', (req, res) => {
       // Gets the message. entry.messaging is an array, but 
       // will only ever contain one message, so we get index 0
       let webhook_event = entry.messaging[0];
-      // fetch('https://graph.facebook.com/v7.0/me/messages?access_token=EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs', {
-      //   method: "post",
-      //   body: {{
-
-      //     "recipient": {
-      //       "id": "100998771676257"
-      //     },
-      //   }
-      //     "message": {
-      //       "text": "hello, world!"
-      //     }
-      //   },
-      // }).then((res) => res.json()).then((result) => {
-      //   console.log(result)
-      // })
-      console.log({ webhook_event: entry, messaging: webhook_event });
+      let PSID = webhook_event.recipient.id
+      if(PSID){
+        postBack(PSID)
+      }
+      console.log({ webhook_event: entry, messaging: webhook_event.recipient.id });
     });
 
     // Returns a '200 OK' response to all requests
@@ -47,7 +40,53 @@ app.post('/webhook', (req, res) => {
   }
 
 });
+function postBack(PSID) {
+  request({
+    "uri": "https://graph.facebook.com/v7.0/me/messages",
+    "qs": { "access_token": "EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs" },
+    "method": "POST",
+    "json": JSON.stringify({
+      recipient: {
+        // id: "3273760249321146"    saqib id
+        id: PSID
+      },
+      message: {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "generic",
+            elements: [
+              {
+                title: "Welcome!",
+                image_url: "https://petersfancybrownhats.com/company_image.png",
+                subtitle: "We have the right hat for everyone.",
+                default_action: {
+                  type: "web_url",
+                  url: "https://4.img-dpreview.com/files/p/TS1200x900~sample_galleries/4973291808/1885203361.jpg",
+                  webview_height_ratio: "tall"
+                },
+                buttons: [
+                  {
+                    type: "web_url",
+                    url: "https://e-commerce-theme-cfa2d.web.app/",
+                    title: "View Website"
+                  }, {
+                    type: "postback",
+                    title: "Start Chatting",
+                    payload: "DEVELOPER_DEFINED_PAYLOAD"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    })
 
+  }, (err, res, body) => {
+    console.log({ err, res })
+  })
+}
 // Adds support for GET requests to our webhook
 app.get('/webhook', (req, res) => {
   console.log('runn get')
