@@ -26,10 +26,10 @@ app.post('/webhook', (req, res) => {
       // will only ever contain one message, so we get index 0
       let webhook_event = entry.messaging[0];
       let PSID = webhook_event.sender.id
-      if(PSID){
+      if (PSID) {
         postBack(PSID)
       }
-      console.log({ webhook_event: entry, messaging: webhook_event});
+      console.log({ webhook_event: entry, messaging: webhook_event });
     });
 
     // Returns a '200 OK' response to all requests
@@ -45,7 +45,7 @@ function postBack(PSID) {
     "uri": "https://graph.facebook.com/v7.0/me/messages",
     "qs": { "access_token": "EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs" },
     "method": "POST",
-    "json": JSON.stringify({
+    "json": {
       recipient: {
         // id: "3273760249321146"    saqib id
         id: PSID
@@ -81,12 +81,12 @@ function postBack(PSID) {
           }
         }
       }
-    })
+    }
 
   }, (err, res, body) => {
-    if(!err){
-    console.log('message sent!')
-    }else{
+    if (!err) {
+      console.log('message sent!')
+    } else {
       console.log({ err, res })
     }
   })
