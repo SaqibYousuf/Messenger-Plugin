@@ -141,7 +141,7 @@ app.get('/webhook', (req, res) => {
 
 app.get('/get_allProducts', (req, res) => {
 	firebase.database().ref('user').on('value',(snapShot)=>{
-		res.status(200).send(snapShot.val())
+		res.send(snapShot.val())
 	})
 })
 app.post('/post_product', (req, res) => {
