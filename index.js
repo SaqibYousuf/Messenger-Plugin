@@ -8,6 +8,7 @@ const
 	express = require('express'),
 	firebase = require('firebase'),
 	//firebaseApp = require('firebase').app(),
+	localStorage = require('node-localstorage').LocalStorage,
 	bodyParser = require('body-parser'),
 	fetch = require('node-fetch'),
 	app = express().use(bodyParser.json()),
