@@ -39,7 +39,9 @@ app.post('/webhook', (req, res) => {
 			// Gets the message. entry.messaging is an array, but 
 			// will only ever contain one message, so we get index 0
 			let webhook_event = entry.messaging[0];
+			let Code = localStorage.getItem('code')
 			let PSID = webhook_event.sender.id;
+			console.log(Code)
 			var textmes = webhook_event.message.text
 			if (PSID && textmes === 'fd here') {
 				for (var i = 0; i < 4; i++) {
@@ -109,11 +111,7 @@ function postBack(PSID) {
 	})
 }
 // Adds support for GET requests to our webhook
-app.get('/get_allProducts', (req, res) => {
-	firebase.database().ref('user').on('value',(snapShot)=>{
-		res.status(200).send(snapShot.val())
-	})
-})
+
 app.get('/webhook', (req, res) => {
 	console.log('runn get')
 	// Your verify token. Should be a random string.
@@ -141,8 +139,34 @@ app.get('/webhook', (req, res) => {
 	}
 });
 
+// All Api 
 
+app.get('/get_allProducts', (req, res) => {
+	firebase.database().ref('all_products').on('value', (snapShot) => {
+		res.status(200).send(snapShot.val())
+	})
+})
+app.post('/admin/post_product', (req, res) => {
+	if (req.body) {
 
+		firebase.database().ref().child('all_products').child(req.body.code).set(req.body).then((value) => {
+			console.log(value)
+			res.send({ success: true, message: "your data successfully send " })
+		}).catch((err) => {
+			res.send({ success: false, message: err.message })
+		})
+	}
+})
+app.post('/checkout', (req, res) => {
+	if (req.body) {
+		firebase.database().ref().child('checkout_orders').child(req.body.code).set(req.body).then((value) => {
+			localStorage.setItem('checkout_order_code', req.body.code)
+			res.send({ success: true, message: `your order is save please send this code ${req.body.code} in our messenger page ` })
+		}).catch((err) => {
+			res.send({ success: false, message: err.message })
+		})
+	}
+})
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
 
