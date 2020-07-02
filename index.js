@@ -25,7 +25,7 @@ var firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-
+localStorage = new LocalStorage('./scratch');
 // Creates the endpoint for our webhook 
 app.post('/webhook', (req, res) => {
 
