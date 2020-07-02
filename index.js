@@ -38,7 +38,7 @@ app.post('/webhook', (req, res) => {
 			// Gets the message. entry.messaging is an array, but 
 			// will only ever contain one message, so we get index 0
 			let webhook_event = entry.messaging[0];
-			let Code = localStorage.getItem('code')
+			let Code = localStorage.getItem('checkout_order_code')
 			let PSID = webhook_event.sender.id;
 			console.log(Code)
 			var textmes = webhook_event.message.text
@@ -159,7 +159,6 @@ app.post('/admin/post_product', (req, res) => {
 app.post('/checkout', (req, res) => {
 	if (req.body) {
 		firebase.database().ref().child('checkout_orders').child(req.body.code).set(req.body).then((value) => {
-			localStorage.setItem('checkout_order_code', req.body.code)
 			res.send({ success: true, message: `your order is save please send this code ${req.body.code} in our messenger page ` })
 		}).catch((err) => {
 			res.send({ success: false, message: err.message })
