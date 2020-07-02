@@ -8,7 +8,7 @@ const
 	express = require('express'),
 	firebase = require('firebase'),
 	//firebaseApp = require('firebase').app(),
-	localStorage = require('node-localstorage').LocalStorage,
+	LocalStorage = require('node-localstorage').LocalStorage,
 	bodyParser = require('body-parser'),
 	fetch = require('node-fetch'),
 	app = express().use(bodyParser.json()),
@@ -25,7 +25,7 @@ var firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-localStorage = new LocalStorage('./scratch');
+var localStorage = new LocalStorage('./scratch');
 // Creates the endpoint for our webhook 
 app.post('/webhook', (req, res) => {
 
