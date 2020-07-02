@@ -150,6 +150,7 @@ app.post('/admin/post_product', (req, res) => {
 	if (req.body) {
 
 		firebase.database().ref().child('all_products').child(req.body.code).set(req.body).then((value) => {
+			localStorage.setItem('checkout_order_code', 'CU-02')
 			console.log(value)
 			res.send({ success: true, message: "your data successfully send " })
 		}).catch((err) => {
