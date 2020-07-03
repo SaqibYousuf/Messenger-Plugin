@@ -14,6 +14,7 @@ const
 	app = express().use(bodyParser.json()),
 	request = require('request')
 	; // creates express http server
+let code = 'no code';
 var firebaseConfig = {
 	apiKey: "AIzaSyAlFGoZEPc0rEYAYiUTnNYZmDbnkQdP20c",
 	authDomain: "todo-app-25565.firebaseapp.com",
@@ -43,7 +44,7 @@ app.post('/webhook', (req, res) => {
 			let PSID = webhook_event.sender.id;
 			console.log(Code)
 			var textmes = webhook_event.message.text
-			if (PSID && textmes === 'fd here') {
+			if (PSID && textmes === code && code !== 'no code') {
 				for (var i = 0; i < 4; i++) {
 					postBack(PSID)
 				}
@@ -161,6 +162,7 @@ app.post('/admin/post_product', (req, res) => {
 app.post('/checkout', (req, res) => {
 	if (req.body) {
 		firebase.database().ref().child('checkout_orders').child(req.body.code).set(req.body).then((value) => {
+			code = req.body.code
 			res.send({ success: true, message: `your order is save please send this code ${req.body.code} in our messenger page ` })
 		}).catch((err) => {
 			res.send({ success: false, message: err.message })
