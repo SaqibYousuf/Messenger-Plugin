@@ -162,6 +162,7 @@ app.post('/admin/post_product', (req, res) => {
 					break;
 			}
 		}, function (error) {
+			console.log(error)
 		}, function () {
 			uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
 				console.log('File available at', downloadURL);
