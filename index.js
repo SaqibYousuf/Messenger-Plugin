@@ -149,14 +149,31 @@ app.get('/get_allProducts', (req, res) => {
 })
 app.post('/admin/post_product', (req, res) => {
 	if (req.body) {
-
-		firebase.database().ref().child('all_products').child(req.body.code).set(req.body).then((value) => {
-			localStorage.setItem('checkout_order_code', 'CU-02')
-			console.log(value)
-			res.send({ success: true, message: "your data successfully send " })
-		}).catch((err) => {
-			res.send({ success: false, message: err.message })
-		})
+		var uploadTask = firebase.storage().ref(`allImages/products/${req.body.code}`).put(req.body.imageUrl)
+		uploadTask.on('state_changed', function (snapshot) {
+			var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+			console.log('Upload is ' + progress + '% done');
+			switch (snapshot.state) {
+				case firebase.storage.TaskState.PAUSED: // or 'paused'
+					console.log('Upload is paused');
+					break;
+				case firebase.storage.TaskState.RUNNING: // or 'running'
+					console.log('Upload is running');
+					break;
+			}
+		}, function (error) {
+		}, function () {
+			uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+				console.log('File available at', downloadURL);
+				firebase.database().ref().child('all_products').child(req.body.code).set({ ...req.body, imageUrl: downloadURL }).then((value) => {
+					localStorage.setItem('checkout_order_code', 'CU-02')
+					console.log(value)
+					res.send({ success: true, message: "your data successfully send " })
+				}).catch((err) => {
+					res.send({ success: false, message: err.message })
+				})
+			});
+		});
 	}
 })
 app.post('/checkout', (req, res) => {
