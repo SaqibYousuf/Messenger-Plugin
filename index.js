@@ -28,10 +28,14 @@ var firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-let storagedb = firebase.app().storage()
-let db = firebase.app().database()
+let storagedb = firebase.storage()
+let db = firebase.database()
 //var localStorage = new LocalStorage('./scratch');
 // Creates the endpoint for our webhook 
+//admin.initializeApp({
+//	credential: admin.credential.applicationDefault(),
+//	databaseURL: 'https://<DATABASE_NAME>.firebaseio.com'
+//  });
 const multer = require('multer');
 const Multerstorage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -170,6 +174,19 @@ app.get('/get_allProducts', (req, res) => {
 		res.status(200).send(snapShot.val())
 	})
 })
+app.get('/images', (req, res) => {
+	console.log(req.query.filename)
+	fs.readFile
+	var filename = req.query.filename;
+	let file_path = __dirname + '/Images/' + filename;
+	if (fs.existsSync(file_path)) {
+		res.sendFile(file_path)
+	} else {
+		res.send({
+			message: "file not found"
+		})
+	}
+})
 app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
 	let file = req.file
 	let files = req.files
@@ -177,7 +194,16 @@ app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
 	try {
 
 		if (req.body) {
-			//var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).put(blob)
+			//var img = fs.readFileSync(req.file.path);
+			//var encode_image = img.toString('base64');
+			//// Define a JSONobject for the image attributes for saving to database
+
+			//var finalImg = {
+			//	contentType: req.file.mimetype,
+			//	image: new Buffer(encode_image, 'base64')
+			//};
+			////console.log(encode_image)
+			//var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).putString(encode_image)
 			//uploadTask.on('state_changed', function (snapshot) {
 			//	var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
 			//	console.log('Upload is ' + progress + '% done');
@@ -197,7 +223,7 @@ app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
 			firebase.database().ref()
 				.child('all_products')
 				.child(req.body.code)
-				.set({ ...req.body, imageUrl: __dirname + '/Images/' + file.filename }).then((value) => {
+				.set({ ...req.body, imageUrl: file.filename }).then((value) => {
 					res.send({ success: true, message: "your data successfully send " })
 				}).catch((err) => {
 					res.send({ success: false, message: err.message })
