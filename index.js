@@ -35,11 +35,11 @@ let db = firebase.app().database()
 const multer = require('multer');
 const Multerstorage = multer.diskStorage({
 	destination: function (req, file, cb) {
-		console.log(file,req)
-		cb(null, __dirname + '/Routes/app/uploadedImages');
+		console.log(file, req)
+		cb(null, __dirname + '/Images');
 	},
 	filename: function (req, file, cb) {
-		console.log(file,req)
+		console.log(file, req)
 		cb(null, (new Date).getTime() + file.originalname);
 	}
 });
@@ -171,64 +171,39 @@ app.get('/get_allProducts', (req, res) => {
 	})
 })
 app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
-	let file = await req.file
-	let files = await req.files
-	console.log(req.body, file, files)
-
-	//fs.readFile(req.body.imageUrl, { encoding: 'utf-8' }, (res, data) => {
-	//	console.log({ res }, { data })
-	//})
-	//fs.readFile(req.body.imageUrl, 'utf8', function(err, contents) {
-	//	console.log(contents);
-	//});
+	let file = req.file
+	let files = req.files
+	console.log(file, files)
 	try {
 
 		if (req.body) {
-			//console.log()
-			//let str = fs.readFile(req.body.imageUrl.name, req.body.imageUrl, (err, res) => {
-			//	return res
+			//var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).put(blob)
+			//uploadTask.on('state_changed', function (snapshot) {
+			//	var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+			//	console.log('Upload is ' + progress + '% done');
+			//	switch (snapshot.state) {
+			//		case storagedb.TaskState.PAUSED: // or 'paused'
+			//			console.log('Upload is paused');
+			//			break;
+			//		case storagedb.TaskState.RUNNING: // or 'running'
+			//			console.log('Upload is running');
+			//			break;
+			//	}
+			//}, function (error) {
+			//	console.log(error.message, 'helooo')
+			//}, function () {
+			//	uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+			//		console.log('File available at', downloadURL);
+			firebase.database().ref()
+				.child('all_products')
+				.child(req.body.code)
+				.set({ ...req.body, imageUrl: __dirname + '/Images/' + file.filename }).then((value) => {
+					res.send({ success: true, message: "your data successfully send " })
+				}).catch((err) => {
+					res.send({ success: false, message: err.message })
+				})
+			//	}).catch((err) => console.log(err.message))
 			//});
-			//console.log(str, 'heloo')
-			//getBase64(req.body.imageUrl.originFileObj, imageUrl =>
-			//	console.log(imageUrl)
-			//);
-			let blob = new Blob([req.body.imageUrl], { type: req.body.imageUrl.type });
-			console.log(blob)
-			//var metadata = {
-			//	contentType: blob.type
-			//};
-			//let reader = FileReader()
-			//reader.readAsText(blob)
-			//reader.onload = function () {
-			//	console.log(reader.result);
-			//};
-			//let file = new File(req.body.imageUrl, req.body.imageUrl.name, {type: req.body.imageUrl.type, lastModified: req.body.imageUrl.lastModified})
-			var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).put(blob)
-			uploadTask.on('state_changed', function (snapshot) {
-				var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-				console.log('Upload is ' + progress + '% done');
-				switch (snapshot.state) {
-					case storagedb.TaskState.PAUSED: // or 'paused'
-						console.log('Upload is paused');
-						break;
-					case storagedb.TaskState.RUNNING: // or 'running'
-						console.log('Upload is running');
-						break;
-				}
-			}, function (error) {
-				console.log(error.message, 'helooo')
-			}, function () {
-				uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
-					console.log('File available at', downloadURL);
-					firebase.database().ref().child('all_products').child(req.body.code).set({ ...req.body, imageUrl: downloadURL }).then((value) => {
-						localStorage.setItem('checkout_order_code', 'CU-02')
-						console.log(value, 'he;;pp')
-						res.send({ success: true, message: "your data successfully send " })
-					}).catch((err) => {
-						res.send({ success: false, message: err.message })
-					})
-				}).catch((err) => console.log(err.message))
-			});
 		}
 	}
 	catch (err) {
