@@ -7,10 +7,12 @@
 const
 	express = require('express'),
 	firebase = require('firebase'),
-	//firebaseApp = require('firebase').app(),
+	fs = require('fs'),
+	Blob = require('node-blob'),
 	LocalStorage = require('node-localstorage').LocalStorage,
 	bodyParser = require('body-parser'),
 	fetch = require('node-fetch'),
+	storage = require('@firebase/storage'),
 	app = express().use(bodyParser.json()),
 	request = require('request')
 	; // creates express http server
@@ -20,14 +22,32 @@ var firebaseConfig = {
 	authDomain: "todo-app-25565.firebaseapp.com",
 	databaseURL: "https://todo-app-25565.firebaseio.com",
 	projectId: "todo-app-25565",
-	storageBucket: "todo-app-25565.appspot.com",
+	storageBucket: "gs://todo-app-25565.appspot.com",
 	messagingSenderId: "600592089866",
 	appId: "1:600592089866:web:1535bd7732529489"
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-var localStorage = new LocalStorage('./scratch');
+let storagedb = firebase.app().storage()
+let db = firebase.app().database()
+//var localStorage = new LocalStorage('./scratch');
 // Creates the endpoint for our webhook 
+const multer = require('multer');
+const Multerstorage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		console.log(file,req)
+		cb(null, __dirname + '/Routes/app/uploadedImages');
+	},
+	filename: function (req, file, cb) {
+		console.log(file,req)
+		cb(null, (new Date).getTime() + file.originalname);
+	}
+});
+
+const upload = multer({
+	storage: Multerstorage
+});
+
 app.post('/webhook', (req, res) => {
 
 	let body = req.body;
@@ -139,42 +159,80 @@ app.get('/webhook', (req, res) => {
 		}
 	}
 });
-
+//function getBase64(img, callback) {
+//	const reader = new FileReader();
+//	reader.addEventListener('load', () => callback(reader.result));
+//	reader.readAsDataURL(img);
+//}
 // All Api 
-
 app.get('/get_allProducts', (req, res) => {
 	firebase.database().ref('all_products').on('value', (snapShot) => {
 		res.status(200).send(snapShot.val())
 	})
 })
-app.post('/admin/post_product', (req, res) => {
-	if (req.body) {
-		var uploadTask = firebase.storage().ref(`allImages/products/${req.body.code}`).put(req.body.imageUrl)
-		uploadTask.on('state_changed', function (snapshot) {
-			var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-			console.log('Upload is ' + progress + '% done');
-			switch (snapshot.state) {
-				case firebase.storage.TaskState.PAUSED: // or 'paused'
-					console.log('Upload is paused');
-					break;
-				case firebase.storage.TaskState.RUNNING: // or 'running'
-					console.log('Upload is running');
-					break;
-			}
-		}, function (error) {
-			console.log(error)
-		}, function () {
-			uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
-				console.log('File available at', downloadURL);
-				firebase.database().ref().child('all_products').child(req.body.code).set({ ...req.body, imageUrl: downloadURL }).then((value) => {
-					localStorage.setItem('checkout_order_code', 'CU-02')
-					console.log(value)
-					res.send({ success: true, message: "your data successfully send " })
-				}).catch((err) => {
-					res.send({ success: false, message: err.message })
-				})
+app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
+	let file = await req.file
+	let files = await req.files
+	console.log(req.body, file, files)
+
+	//fs.readFile(req.body.imageUrl, { encoding: 'utf-8' }, (res, data) => {
+	//	console.log({ res }, { data })
+	//})
+	//fs.readFile(req.body.imageUrl, 'utf8', function(err, contents) {
+	//	console.log(contents);
+	//});
+	try {
+
+		if (req.body) {
+			//console.log()
+			//let str = fs.readFile(req.body.imageUrl.name, req.body.imageUrl, (err, res) => {
+			//	return res
+			//});
+			//console.log(str, 'heloo')
+			//getBase64(req.body.imageUrl.originFileObj, imageUrl =>
+			//	console.log(imageUrl)
+			//);
+			let blob = new Blob([req.body.imageUrl], { type: req.body.imageUrl.type });
+			console.log(blob)
+			//var metadata = {
+			//	contentType: blob.type
+			//};
+			//let reader = FileReader()
+			//reader.readAsText(blob)
+			//reader.onload = function () {
+			//	console.log(reader.result);
+			//};
+			//let file = new File(req.body.imageUrl, req.body.imageUrl.name, {type: req.body.imageUrl.type, lastModified: req.body.imageUrl.lastModified})
+			var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).put(blob)
+			uploadTask.on('state_changed', function (snapshot) {
+				var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+				console.log('Upload is ' + progress + '% done');
+				switch (snapshot.state) {
+					case storagedb.TaskState.PAUSED: // or 'paused'
+						console.log('Upload is paused');
+						break;
+					case storagedb.TaskState.RUNNING: // or 'running'
+						console.log('Upload is running');
+						break;
+				}
+			}, function (error) {
+				console.log(error.message, 'helooo')
+			}, function () {
+				uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+					console.log('File available at', downloadURL);
+					firebase.database().ref().child('all_products').child(req.body.code).set({ ...req.body, imageUrl: downloadURL }).then((value) => {
+						localStorage.setItem('checkout_order_code', 'CU-02')
+						console.log(value, 'he;;pp')
+						res.send({ success: true, message: "your data successfully send " })
+					}).catch((err) => {
+						res.send({ success: false, message: err.message })
+					})
+				}).catch((err) => console.log(err.message))
 			});
-		});
+		}
+	}
+	catch (err) {
+		console.log(err.message)
 	}
 })
 app.post('/checkout', (req, res) => {
