@@ -12,11 +12,29 @@ const
 	LocalStorage = require('node-localstorage').LocalStorage,
 	bodyParser = require('body-parser'),
 	fetch = require('node-fetch'),
-	storage = require('@firebase/storage'),
+	//admin = require("@")
+	storage2 = require('@firebase/storage'),
 	app = express().use(bodyParser.json()),
 	request = require('request')
 	; // creates express http server
+const { Storage } = require('@google-cloud/storage');
+const storage = new Storage({
+	projectId: 'todo-app-25565',
+	keyFilename: 'serviceAccountKey.json',
+});
+const bucket =
+	storage.bucket('gs://todo-app-25565.appspot.com');
 let code = 'no code';
+const imageFilter = function (req, file, cb) {
+	// Accept images only
+	console.log(file)
+	if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF)$/)) {
+		req.fileValidationError = 'Only image files are allowed!';
+		return cb(new Error('Only image files are allowed!'), false);
+	}
+	cb(null, true);
+};
+
 var firebaseConfig = {
 	apiKey: "AIzaSyAlFGoZEPc0rEYAYiUTnNYZmDbnkQdP20c",
 	authDomain: "todo-app-25565.firebaseapp.com",
@@ -50,6 +68,14 @@ const Multerstorage = multer.diskStorage({
 
 const upload = multer({
 	storage: Multerstorage
+});
+const uploader = multer({
+	storage: multer.memoryStorage(),
+	dest: __dirname + '/Images/',
+	limits: {
+		fileSize: 5 * 1024 * 1024, // keep images size < 5 MB
+	},
+	fileFilter: imageFilter
 });
 
 app.post('/webhook', (req, res) => {
@@ -137,7 +163,7 @@ function postBack(PSID) {
 }
 // Adds support for GET requests to our webhook
 
-app.get('/webhook', (req, res) => {
+app.get('/webhook', (req, res, next) => {
 	console.log('runn get')
 	// Your verify token. Should be a random string.
 	let VERIFY_TOKEN = "<YOUR_VERIFY_TOKEN>"
@@ -176,7 +202,6 @@ app.get('/get_allProducts', (req, res) => {
 })
 app.get('/images', (req, res) => {
 	console.log(req.query.filename)
-	fs.readFile
 	var filename = req.query.filename;
 	let file_path = __dirname + '/Images/' + filename;
 	if (fs.existsSync(file_path)) {
@@ -187,47 +212,43 @@ app.get('/images', (req, res) => {
 		})
 	}
 })
-app.post('/admin/post_product', upload.single('imageUrl'), async (req, res) => {
+app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res, next) => {
 	let file = req.file
 	let files = req.files
-	console.log(file, files)
+	console.log(req.body.imageUrl, file, files)
 	try {
 
 		if (req.body) {
-			//var img = fs.readFileSync(req.file.path);
-			//var encode_image = img.toString('base64');
-			//// Define a JSONobject for the image attributes for saving to database
+			const blob = bucket.file(req.file.originalname);
+			const blobWriter = blob.createWriteStream({
+				metadata: {
+					contentType: req.file.mimetype,
+				},
+			});
+			blobWriter.on('error', (err) => next(err));
 
-			//var finalImg = {
-			//	contentType: req.file.mimetype,
-			//	image: new Buffer(encode_image, 'base64')
-			//};
-			////console.log(encode_image)
-			//var uploadTask = await storagedb.ref(`allProductsImages/${req.body.code}`).putString(encode_image)
-			//uploadTask.on('state_changed', function (snapshot) {
-			//	var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-			//	console.log('Upload is ' + progress + '% done');
-			//	switch (snapshot.state) {
-			//		case storagedb.TaskState.PAUSED: // or 'paused'
-			//			console.log('Upload is paused');
-			//			break;
-			//		case storagedb.TaskState.RUNNING: // or 'running'
-			//			console.log('Upload is running');
-			//			break;
-			//	}
-			//}, function (error) {
-			//	console.log(error.message, 'helooo')
-			//}, function () {
-			//	uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
-			//		console.log('File available at', downloadURL);
-			firebase.database().ref()
-				.child('all_products')
-				.child(req.body.code)
-				.set({ ...req.body, imageUrl: file.filename }).then((value) => {
-					res.send({ success: true, message: "your data successfully send " })
-				}).catch((err) => {
-					res.send({ success: false, message: err.message })
-				})
+			blobWriter.on('finish', () => {
+				// Assembling public URL for accessing the file via HTTP
+				const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
+					bucket.name
+					}/o/${encodeURI(blob.name)}?alt=media`;
+
+				// Return the file name and its public URL
+				res
+					.status(200)
+					.send({ fileName: req.file.originalname, fileLocation: publicUrl });
+			});
+
+			// When there is no more data to be consumed from the stream
+			blobWriter.end(req.file.buffer);
+			//firebase.database().ref()
+			//	.child('all_products')
+			//	.child(req.body.code)
+			//	.set({ ...req.body, imageUrl: file.filename }).then((value) => {
+			//		res.send({ success: true, message: "your data successfully send " })
+			//	}).catch((err) => {
+			//		res.send({ success: false, message: err.message })
+			//	})
 			//	}).catch((err) => console.log(err.message))
 			//});
 		}
