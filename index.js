@@ -25,9 +25,10 @@ const storage = new Storage({
 const bucket =
 	storage.bucket('gs://todo-app-25565.appspot.com');
 let code = 'no code';
+//app.use(express.urlencoded({ extended: true }))
 const imageFilter = function (req, file, cb) {
 	// Accept images only
-	console.log(file)
+	//console.log(file)
 	if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF)$/)) {
 		req.fileValidationError = 'Only image files are allowed!';
 		return cb(new Error('Only image files are allowed!'), false);
@@ -57,11 +58,11 @@ let db = firebase.database()
 const multer = require('multer');
 const Multerstorage = multer.diskStorage({
 	destination: function (req, file, cb) {
-		console.log(file, req)
+		//console.log(file, req)
 		cb(null, __dirname + '/Images');
 	},
 	filename: function (req, file, cb) {
-		console.log(file, req)
+		//console.log(file, req)
 		cb(null, (new Date).getTime() + file.originalname);
 	}
 });
@@ -92,14 +93,14 @@ app.post('/webhook', (req, res) => {
 			let webhook_event = entry.messaging[0];
 			let Code = localStorage.getItem('checkout_order_code')
 			let PSID = webhook_event.sender.id;
-			console.log(Code)
+			//console.log(Code)
 			var textmes = webhook_event.message.text
 			if (PSID && textmes === code && code !== 'no code') {
 				for (var i = 0; i < 4; i++) {
 					postBack(PSID)
 				}
 			}
-			console.log({ webhook_event: entry, messaging: webhook_event });
+			//console.log({ webhook_event: entry, messaging: webhook_event });
 		});
 
 		// Returns a '200 OK' response to all requests
@@ -155,16 +156,16 @@ function postBack(PSID) {
 
 	}, (err, res, body) => {
 		if (!err) {
-			console.log('message sent!')
+			//console.log('message sent!')
 		} else {
-			console.log({ err, res })
+			//console.log({ err, res })
 		}
 	})
 }
 // Adds support for GET requests to our webhook
 
 app.get('/webhook', (req, res, next) => {
-	console.log('runn get')
+	//console.log('runn get')
 	// Your verify token. Should be a random string.
 	let VERIFY_TOKEN = "<YOUR_VERIFY_TOKEN>"
 
@@ -180,7 +181,7 @@ app.get('/webhook', (req, res, next) => {
 		if (mode === 'subscribe' && token === VERIFY_TOKEN) {
 
 			// Responds with the challenge token from the request
-			console.log('WEBHOOK_VERIFIED');
+			//console.log('WEBHOOK_VERIFIED');
 			res.status(200).send(challenge);
 
 		} else {
@@ -201,7 +202,7 @@ app.get('/get_allProducts', (req, res) => {
 	})
 })
 app.get('/images', (req, res) => {
-	console.log(req.query.filename)
+	//console.log(req.query.filename)
 	var filename = req.query.filename;
 	let file_path = __dirname + '/Images/' + filename;
 	if (fs.existsSync(file_path)) {
@@ -212,44 +213,60 @@ app.get('/images', (req, res) => {
 		})
 	}
 })
+var cpUpload = upload.fields([{ name: 'imageUrl', maxCount: 8 }, { name: 'gallery', maxCount: 8 }])
 app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res, next) => {
-	let file = req.file
 	let files = req.files
-	console.log(req.body.imageUrl, file, files)
+	//console.log(files)
 	try {
 
 		if (req.body) {
-			const blob = bucket.file(req.file.originalname);
-			const blobWriter = blob.createWriteStream({
-				metadata: {
-					contentType: req.file.mimetype,
-				},
-			});
-			blobWriter.on('error', (err) => next(err));
+			let newUrls = []
+			for (var i = 0; i < files.length; i++) {
+				const blob = bucket.file((new Date).getTime() + files[i].originalname);
+				const blobWriter = await blob.createWriteStream({
+					metadata: {
+						contentType: files[i].mimetype,
+					},
+				});
+				blobWriter.on('error', (err) => console.log(err.message));
 
-			blobWriter.on('finish', () => {
-				// Assembling public URL for accessing the file via HTTP
-				const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
-					bucket.name
-					}/o/${encodeURI(blob.name)}?alt=media`;
+				blobWriter.on('finish', () => {
+					// Assembling public URL for accessing the file via HTTP
+					const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
+						bucket.name
+						}/o/${encodeURI(blob.name)}?alt=media`;
+					newUrls.push(publicUrl)
+					// Return the file name and its public URL
+					//res
+					//	.status(200)
+					//	.send({ fileLocation: publicUrl });
+					//if (i == files.length - 1) {
+					console.log(publicUrl)
+					console.log('runnn')
+					firebase.database().ref()
+						.child('all_products')
+						.child(req.body.code)
+						.set({ ...req.body, imageUrl: newUrls }).then((value) => {
+						}).catch((err) => {
+							if (newUrls.length == files.length) {
 
-				// Return the file name and its public URL
-				res
-					.status(200)
-					.send({ fileName: req.file.originalname, fileLocation: publicUrl });
-			});
+								res.send({ success: false, message: err.message })
+							}
+						})
+					//}
+				});
+				if (i == files.length - 1 ) {
+					res.send({ success: true, message: "your data successfully send " })
+				}
+				blobWriter.end(files[i].buffer);
+			}
 
 			// When there is no more data to be consumed from the stream
-			blobWriter.end(req.file.buffer);
-			//firebase.database().ref()
-			//	.child('all_products')
-			//	.child(req.body.code)
-			//	.set({ ...req.body, imageUrl: file.filename }).then((value) => {
-			//		res.send({ success: true, message: "your data successfully send " })
-			//	}).catch((err) => {
-			//		res.send({ success: false, message: err.message })
-			//	})
-			//	}).catch((err) => console.log(err.message))
+			//if (newUrls.length == files.length) {
+			//	console.log('runnnnnn')
+
+			//}
+			//}).catch((err) => console.log(err.message))
 			//});
 		}
 	}
