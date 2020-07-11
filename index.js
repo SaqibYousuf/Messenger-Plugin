@@ -213,6 +213,7 @@ app.get('/images', (req, res) => {
 		})
 	}
 })
+
 var cpUpload = upload.fields([{ name: 'imageUrl', maxCount: 8 }, { name: 'gallery', maxCount: 8 }])
 app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res, next) => {
 	let files = req.files
