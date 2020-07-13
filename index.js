@@ -77,7 +77,8 @@ app.post('/webhook', (req, res) => {
 			let PSID = webhook_event.sender.id;
 			//console.log(Code)
 			var textmes = webhook_event.message.text
-			if (PSID && textmes === code && code !== 'no code') {
+			//if (PSID && textmes === code && code !== 'no code') {
+				if (PSID && textmes === 'code') {
 				for (var i = 0; i < 4; i++) {
 					postBack(PSID)
 				}
