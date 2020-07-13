@@ -1,31 +1,26 @@
 'use strict';
-
-// const { request } = require('express');
-
-// Imports dependencies and set up http server
-
 const
 	express = require('express'),
 	firebase = require('firebase'),
 	fs = require('fs'),
-	Blob = require('node-blob'),
-	LocalStorage = require('node-localstorage').LocalStorage,
 	bodyParser = require('body-parser'),
-	fetch = require('node-fetch'),
-	//admin = require("@")
+	{ firebaseConfig } = require('./config'),
 	storage2 = require('@firebase/storage'),
 	app = express().use(bodyParser.json()),
 	request = require('request')
 	; // creates express http server
 const { Storage } = require('@google-cloud/storage');
+
 const storage = new Storage({
 	projectId: 'todo-app-25565',
 	keyFilename: 'serviceAccountKey.json',
 });
+
 const bucket =
 	storage.bucket('gs://todo-app-25565.appspot.com');
 let code = 'no code';
-//app.use(express.urlencoded({ extended: true }))
+
+
 const imageFilter = function (req, file, cb) {
 	// Accept images only
 	//console.log(file)
@@ -36,19 +31,9 @@ const imageFilter = function (req, file, cb) {
 	cb(null, true);
 };
 
-var firebaseConfig = {
-	apiKey: "AIzaSyAlFGoZEPc0rEYAYiUTnNYZmDbnkQdP20c",
-	authDomain: "todo-app-25565.firebaseapp.com",
-	databaseURL: "https://todo-app-25565.firebaseio.com",
-	projectId: "todo-app-25565",
-	storageBucket: "gs://todo-app-25565.appspot.com",
-	messagingSenderId: "600592089866",
-	appId: "1:600592089866:web:1535bd7732529489"
-};
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-let storagedb = firebase.storage()
-let db = firebase.database()
 //var localStorage = new LocalStorage('./scratch');
 // Creates the endpoint for our webhook 
 //admin.initializeApp({
@@ -67,9 +52,6 @@ const Multerstorage = multer.diskStorage({
 	}
 });
 
-const upload = multer({
-	storage: Multerstorage
-});
 const uploader = multer({
 	storage: multer.memoryStorage(),
 	dest: __dirname + '/Images/',
@@ -190,31 +172,16 @@ app.get('/webhook', (req, res, next) => {
 		}
 	}
 });
-//function getBase64(img, callback) {
-//	const reader = new FileReader();
-//	reader.addEventListener('load', () => callback(reader.result));
-//	reader.readAsDataURL(img);
-//}
+
+
+
 // All Api 
 app.get('/get_allProducts', (req, res) => {
 	firebase.database().ref('all_products').on('value', (snapShot) => {
 		res.status(200).send(snapShot.val())
 	})
 })
-app.get('/images', (req, res) => {
-	//console.log(req.query.filename)
-	var filename = req.query.filename;
-	let file_path = __dirname + '/Images/' + filename;
-	if (fs.existsSync(file_path)) {
-		res.sendFile(file_path)
-	} else {
-		res.send({
-			message: "file not found"
-		})
-	}
-})
 
-var cpUpload = upload.fields([{ name: 'imageUrl', maxCount: 8 }, { name: 'gallery', maxCount: 8 }])
 app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res, next) => {
 	let files = req.files
 	//console.log(files)
@@ -237,13 +204,6 @@ app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res,
 						bucket.name
 						}/o/${encodeURI(blob.name)}?alt=media`;
 					newUrls.push(publicUrl)
-					// Return the file name and its public URL
-					//res
-					//	.status(200)
-					//	.send({ fileLocation: publicUrl });
-					//if (i == files.length - 1) {
-					console.log(publicUrl)
-					console.log('runnn')
 					firebase.database().ref()
 						.child('all_products')
 						.child(req.body.code)
@@ -256,19 +216,11 @@ app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res,
 						})
 					//}
 				});
-				if (i == files.length - 1 ) {
+				if (i == files.length - 1) {
 					res.send({ success: true, message: "your data successfully send " })
 				}
 				blobWriter.end(files[i].buffer);
 			}
-
-			// When there is no more data to be consumed from the stream
-			//if (newUrls.length == files.length) {
-			//	console.log('runnnnnn')
-
-			//}
-			//}).catch((err) => console.log(err.message))
-			//});
 		}
 	}
 	catch (err) {
@@ -284,6 +236,18 @@ app.post('/checkout', (req, res) => {
 			res.send({ success: false, message: err.message })
 		})
 	}
+})
+
+app.get('/getAllProducts', (req, res) => {
+	firebase.database()
+		.ref()
+		.child('all_products')
+		.on('value',
+			(snapshot) => {
+				let data = snapshot.val()
+				res.send({ sucess: true, data })
+			}
+		)
 })
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
