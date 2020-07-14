@@ -99,7 +99,7 @@ app.post('/webhook', (req, res) => {
 function postBack(PSID) {
 	request({
 		"uri": "https://graph.facebook.com/v7.0/me/messages",
-		"qs": { "access_token": "EAADt1tZAb88cBAMfxyN1kHBld42Gywv7Sq5ZBhWAP9AZAcjEZAZALhwfyZBym3sEvRGavqdlmZBL5ZBZAgMMFD7ZCDUP6uxwcSWNfIthMn2PCQB8zfAa4XABGtSOVKtdSDvAaoy3GM55cweSshyqkccz1aoG2etgJ0azdbGImvYJf4CaqsIiPeKeLs" },
+		"qs": { "access_token": "EAAscxvhqNMoBAOqq8D6lVZCat5sLL9svSm38rZB0A5zE4bZCftS3jlEwabbZA56MMVmb90hCzILakZAacesCdlZAzZCFS8mQfCE3kiVbklXIu7zGPC9VEyA9Vth6cUYW16cSwNTATtfkfjmHcdPSVzFN899oi5El49DOiLWXLhGZA3BEmXDxTw9o" },
 		"method": "POST",
 		"json": {
 			recipient: {
