@@ -4,21 +4,24 @@ const
 	firebase = require('firebase'),
 	fs = require('fs'),
 	bodyParser = require('body-parser'),
-	{ firebaseConfig } = require('./config'),
+	//{ firebaseConfig } = require('./config'),
 	storage2 = require('@firebase/storage'),
 	app = express().use(bodyParser.json()),
 	request = require('request')
 	; // creates express http server
 const { Storage } = require('@google-cloud/storage');
+const multer = require('multer');
+const { projectId, BucketUrl, WebHookAccesToken, firebaseConfig } = require('./config');
 
 const storage = new Storage({
-	projectId: 'todo-app-25565',
+	projectId: projectId,
 	keyFilename: 'serviceAccountKey.json',
 });
 
 const bucket =
-	storage.bucket('gs://todo-app-25565.appspot.com');
+storage.bucket(BucketUrl);
 let code = 'no code';
+firebase.initializeApp(firebaseConfig);
 
 
 const imageFilter = function (req, file, cb) {
@@ -31,16 +34,6 @@ const imageFilter = function (req, file, cb) {
 	cb(null, true);
 };
 
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-//var localStorage = new LocalStorage('./scratch');
-// Creates the endpoint for our webhook 
-//admin.initializeApp({
-//	credential: admin.credential.applicationDefault(),
-//	databaseURL: 'https://<DATABASE_NAME>.firebaseio.com'
-//  });
-const multer = require('multer');
 const Multerstorage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		//console.log(file, req)
@@ -62,9 +55,9 @@ const uploader = multer({
 });
 
 app.post('/webhook', (req, res) => {
-
+	
 	let body = req.body;
-
+	
 	// Checks this is an event from a page subscription
 	if (body.object === 'page') {
 		// Iterates over each entry - there may be multiple if batched
@@ -78,8 +71,8 @@ app.post('/webhook', (req, res) => {
 			//console.log(Code)
 			var textmes = webhook_event.message.text
 			//if (PSID && textmes === code && code !== 'no code') {
-				console.log(webhook_event)
-			if (PSID && textmes === 'code') {
+			console.log(webhook_event)
+			if (PSID && textmes === code) {
 				console.log('run')
 				for (var i = 0; i < 4; i++) {
 					postBack(PSID)
@@ -99,7 +92,7 @@ app.post('/webhook', (req, res) => {
 function postBack(PSID) {
 	request({
 		"uri": "https://graph.facebook.com/v7.0/me/messages",
-		"qs": { "access_token": "EAAscxvhqNMoBAOqq8D6lVZCat5sLL9svSm38rZB0A5zE4bZCftS3jlEwabbZA56MMVmb90hCzILakZAacesCdlZAzZCFS8mQfCE3kiVbklXIu7zGPC9VEyA9Vth6cUYW16cSwNTATtfkfjmHcdPSVzFN899oi5El49DOiLWXLhGZA3BEmXDxTw9o" },
+		"qs": { "access_token": WebHookAccesToken},
 		"method": "POST",
 		"json": {
 			recipient: {
