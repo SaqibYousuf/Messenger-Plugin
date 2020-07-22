@@ -255,7 +255,7 @@ app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res,
 						})
 					//}
 				});
-				if (i == files.length - 1 ) {
+				if (i == files.length - 1) {
 					res.send({ success: true, message: "your data successfully send " })
 				}
 				blobWriter.end(files[i].buffer);
@@ -276,12 +276,21 @@ app.post('/admin/post_product', uploader.array('imageUrl', 10), async (req, res,
 })
 app.post('/checkout', (req, res) => {
 	if (req.body) {
-		firebase.database().ref().child('checkout_orders').child(req.body.code).set(req.body).then((value) => {
-			code = req.body.code
-			res.send({ success: true, message: `your order is save please send this code ${req.body.code} in our messenger page ` })
-		}).catch((err) => {
-			res.send({ success: false, message: err.message })
+		let arr = req.body.codes
+		let finalArr = []
+		for (var i = 0; i < arr.length; i++) {
+			firebase.database().ref().child('all_products').child(arr[i]).on('value', (snap) => {
+				finalArr.push(snap.val())
+			})
+		}
+		res.send({
+			success: true, 
+			message: `your order is save please send this code ${req.body.code} in our messenger page `,
+			arr: finalArr,
 		})
+		// }).catch((err) => {
+		// 	res.send({ success: false, message: err.message })
+		// })
 	}
 })
 // Sets server port and logs message on success
