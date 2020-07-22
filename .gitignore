@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /.pnp
+/scratch
 .pnp.js
 ./serviceAccountKey.json
 ./config.js

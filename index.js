@@ -11,15 +11,15 @@ const
 	; // creates express http server
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
-const { projectId, BucketUrl, WebHookAccesToken, firebaseConfig } = require('./config');
+const { projectId, BucketUrl, WebHookAccesToken, firebaseConfig } = require('../privateFiles/config');
 
 const storage = new Storage({
 	projectId: projectId,
-	keyFilename: 'serviceAccountKey.json',
+	keyFilename: '../privateFiles/serviceAccountKey.json',
 });
 
 const bucket =
-storage.bucket(BucketUrl);
+	storage.bucket(BucketUrl);
 let code = 'no code';
 firebase.initializeApp(firebaseConfig);
 
@@ -55,9 +55,9 @@ const uploader = multer({
 });
 
 app.post('/webhook', (req, res) => {
-	
+
 	let body = req.body;
-	
+
 	// Checks this is an event from a page subscription
 	if (body.object === 'page') {
 		// Iterates over each entry - there may be multiple if batched
@@ -92,7 +92,7 @@ app.post('/webhook', (req, res) => {
 function postBack(PSID) {
 	request({
 		"uri": "https://graph.facebook.com/v7.0/me/messages",
-		"qs": { "access_token": WebHookAccesToken},
+		"qs": { "access_token": WebHookAccesToken },
 		"method": "POST",
 		"json": {
 			recipient: {
@@ -233,7 +233,7 @@ app.post('/checkout', (req, res) => {
 			})
 		}
 		res.send({
-			success: true, 
+			success: true,
 			message: `your order is save please send this code ${req.body.code} in our messenger page `,
 			arr: finalArr,
 		})
